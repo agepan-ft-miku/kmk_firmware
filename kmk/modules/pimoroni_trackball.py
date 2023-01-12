@@ -77,6 +77,9 @@ class TrackballHandler:
 
 
 class PointingHandler(TrackballHandler):
+    def __init__(self, press):
+        self.press = press
+
     def handle(self, keyboard, trackball, x, y, switch, state):
         if x > 0:
             trackball.pointing_device.report_x[0] = x
@@ -90,24 +93,18 @@ class PointingHandler(TrackballHandler):
         if x != 0 or y != 0:
             trackball.pointing_device.hid_pending = True
 
-        if switch == 1:  # Button pressed
-            trackball.pointing_device.button_status[
-                0
-            ] |= trackball.pointing_device.MB_LMB
-            trackball.pointing_device.hid_pending = True
-
-        if not state and trackball.previous_state is True:  # Button released
-            trackball.pointing_device.button_status[
-                0
-            ] &= ~trackball.pointing_device.MB_LMB
-            trackball.pointing_device.hid_pending = True
+        if switch and state:
+            keyboard.tap_key(self.press)
 
         trackball.previous_state = state
 
+    def setup_press(self, press):
+        self.press = press
 
 class ScrollHandler(TrackballHandler):
-    def __init__(self, scroll_direction=ScrollDirection.NATURAL):
+    def __init__(self, press, scroll_direction=ScrollDirection.NATURAL):
         self.scroll_direction = scroll_direction
+        self.press = press
 
     def handle(self, keyboard, trackball, x, y, switch, state):
         if self.scroll_direction == ScrollDirection.REVERSE:
@@ -118,15 +115,13 @@ class ScrollHandler(TrackballHandler):
             pointing_device.report_w[0] = 0xFF & y
             pointing_device.hid_pending = True
 
-        if switch == 1:  # Button pressed
-            pointing_device.button_status[0] |= pointing_device.MB_LMB
-            pointing_device.hid_pending = True
-
-        if not state and trackball.previous_state is True:  # Button released
-            pointing_device.button_status[0] &= ~pointing_device.MB_LMB
-            pointing_device.hid_pending = True
+        if switch and state:
+            keyboard.tap_key(self.press)
 
         trackball.previous_state = state
+
+    def setup_press(self, press):
+        self.press = press
 
 
 class KeyHandler(TrackballHandler):
@@ -164,6 +159,9 @@ class KeyHandler(TrackballHandler):
             keyboard.tap_key(self.down)
         if switch and state:
             keyboard.tap_key(self.press)
+
+    def setup_press(self, press):
+        self.press = press
 
 
 class Trackball(Module):
